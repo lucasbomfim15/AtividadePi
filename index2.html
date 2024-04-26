@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultar e Responder Mensagem</title>
+</head>
+<body>
+    <h1>Consultar e Responder Mensagem</h1>
+    <!-- Placeholder for displaying messages and reply form -->
+    <div id="messages"></div>
+
+    <script>
+        // Function to fetch messages and display them
+        function fetchMessages() {
+            fetch('https://parseapi.back4app.com/classes/MyCustomClassName', {
+                method: 'GET',
+                headers: {
+                    'X-Parse-Application-Id': 'ihomWtogdDFufypTbtrTSAcFPDe8KLM66uja17DJ',
+                    'X-Parse-REST-API-Key': 'Zb0hzP0mqGNVYvSzyS66GvEAHIgITfQe6StEac1W',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Clear previous messages
+                document.getElementById('messages').innerHTML = '';
+
+                // Display messages
+                data.results.forEach(message => {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.innerHTML = `
+                        <p><strong>Nome:</strong> ${message.nome}</p>
+                        <p><strong>E-mail:</strong> ${message.email}</p>
+                        <p><strong>Assunto:</strong> ${message.assunto}</p>
+                        <p><strong>Mensagem:</strong> ${message.mensagem}</p>
+                        <form id="replyForm_${message.objectId}">
+                            <label for="resposta">Resposta:</label><br>
+                            <input type="text" id="resposta_${message.objectId}" name="resposta"><br>
+                            <label for="finalizado">Finalizado:</label>
+                            <input type="checkbox" id="finalizado_${message.objectId}" name="finalizado" value="true">
+                            <button type="submit">Responder</button>
+                        </form>
+                        <hr>
+                    `;
+                    // Add event listener to reply form
+                    messageDiv.querySelector(`#replyForm_${message.objectId}`).addEventListener('submit', function(event) {
+                        event.preventDefault();
+                        const replyData = {
+                            resposta: document.getElementById(`resposta_${message.objectId}`).value,
+                            finalizado: document.getElementById(`finalizado_${message.objectId}`).checked
+                        };
+                        // Send reply data to server
+                        fetch(`https://parseapi.back4app.com/classes/MyCustomClassName/${message.objectId}`, {
+                            method: 'PUT',
+                            headers: {
+                                'X-Parse-Application-Id': 'ihomWtogdDFufypTbtrTSAcFPDe8KLM66uja17DJ',
+                                'X-Parse-REST-API-Key': 'Zb0hzP0mqGNVYvSzyS66GvEAHIgITfQe6StEac1W',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(replyData)
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('Reply Success:', data);
+                            // Refresh messages after replying
+                            fetchMessages();
+                        })
+                        .catch(error => {
+                            console.error('Reply Error:', error);
+                            // You can add error handling here
+                        });
+                    });
+                    document.getElementById('messages').appendChild(messageDiv);
+                });
+            })
+            .catch(error => {
+                console.error('Fetch Error:', error);
+                // You can add error handling here
+            });
+        }
+
+        // Fetch messages on page load
+        fetchMessages();
+    </script>
+</body>
+</html>
